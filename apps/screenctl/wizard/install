@@ -1,0 +1,11 @@
+[
+  {
+    "stepTitle": "屏幕开关",
+    "items": [
+      {
+        "type": "tips",
+        "helpText": "安装后通过桌面图标打开。提供三个控制：屏幕点亮/熄灭（setterm 操作 /dev/tty1）、合盖不休眠开关（修改 /etc/systemd/logind.conf，首次开启自动备份原文件，关闭时还原默认配置）、一键重启设备。仅管理员可操作，屏幕控制需设备存在 /dev/tty1。"
+      }
+    ]
+  }
+]

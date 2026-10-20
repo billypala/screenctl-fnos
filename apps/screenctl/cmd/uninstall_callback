@@ -1,0 +1,6 @@
+#!/bin/bash
+
+### 卸载后：移除 sudoers 白名单
+
+rm -f /etc/sudoers.d/90-screenctl /etc/sudoers.d/90-screenctl.tmp
+exit 0

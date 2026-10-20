@@ -1,0 +1,6 @@
+# 默认所有文本文件以 LF 存储/检出，避免 Windows 检出成 CRLF 破坏 shell 脚本与 manifest
+* text=auto eol=lf
+
+# 二进制资源不参与行尾转换
+*.png binary
+*.fpk binary

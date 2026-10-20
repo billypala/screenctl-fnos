@@ -1,0 +1,23 @@
+# 本地测试数据
+.testdata/
+
+# 构建中间产物：app/server 由 scripts/build.js 从 src/ 装配生成，不入库
+apps/screenctl/app/server/
+
+# fnpack / 打包临时
+*.tgz
+publish/_*
+
+# 编辑器 / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# 日志
+*.log
+npm-debug.log*
+
+# 依赖（本项目零依赖，保险起见）
+node_modules/

@@ -1,0 +1,16 @@
+{
+  "name": "screenctl-fnos",
+  "version": "1.0.1",
+  "private": true,
+  "description": "屏幕控制开关 — fnOS 原生应用：实时检测并控制屏幕开关、合盖不休眠、重启使合盖设置生效。零依赖、零构建。",
+  "scripts": {
+    "icons": "node scripts/make-icons.js",
+    "build": "node scripts/build.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/billypala/screenctl-fnos.git"
+  },
+  "author": "billypala",
+  "license": "MIT"
+}

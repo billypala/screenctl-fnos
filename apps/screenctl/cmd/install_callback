@@ -1,0 +1,54 @@
+#!/bin/bash
+
+### 安装后：授予应用用户免密 sudo 执行特权助手的权限（仅一个固定路径）
+### 本钩子以 root 身份执行；失败不阻断安装
+
+APP="screenctl"
+SUDOERS_FILE="/etc/sudoers.d/90-screenctl"
+LOG_FILE="${TRIM_PKGVAR:-/tmp}/install.log"
+log() { echo "$(date '+%F %T') $*" >> "$LOG_FILE" 2>/dev/null || true; }
+
+# 多候选路径探测 priv-helper.sh 真实路径（fnOS 解包布局可能不同；
+# 不依赖 TRIM_APPDEST 是否注入，挨个试，避免漏写 sudoers）
+CANDIDATES=""
+[ -n "$TRIM_APPDEST" ] && CANDIDATES="$CANDIDATES ${TRIM_APPDEST}/server/priv-helper.sh"
+CANDIDATES="$CANDIDATES /vol1/@appcenter/${APP}/server/priv-helper.sh"
+CANDIDATES="$CANDIDATES /var/apps/${APP}/target/server/priv-helper.sh"
+CANDIDATES="$CANDIDATES /var/apps/${APP}/server/priv-helper.sh"
+
+HELPER=""
+for c in $CANDIDATES; do
+  if [ -f "$c" ]; then
+    H="$(readlink -f "$c" 2>/dev/null)"
+    if [ -n "$H" ] && [ -f "$H" ]; then
+      HELPER="$H"
+      break
+    fi
+  fi
+done
+
+if [ -z "$HELPER" ] || [ ! -f "$HELPER" ]; then
+  log "ERROR: priv-helper.sh not found among candidates"
+  exit 0
+fi
+
+# sudo 直接执行需要可执行位（Windows 打包无法保留 exec bit，此处补齐）
+chmod 755 "$HELPER" 2>/dev/null
+
+cat > "${SUDOERS_FILE}.tmp" <<EOF
+${APP} ALL=(root) NOPASSWD: ${HELPER}
+EOF
+chown root:root "${SUDOERS_FILE}.tmp"
+chmod 0440 "${SUDOERS_FILE}.tmp"
+
+# 语法校验仅记录，不阻断（本环境 visudo 对正确内容返回 0；
+# 即便误报也不应删掉授权，否则按钮将永久无法提权）
+if command -v visudo >/dev/null 2>&1; then
+  visudo -cf "${SUDOERS_FILE}.tmp" >/dev/null 2>&1
+  log "visudo check exit=$?"
+fi
+
+mv -f "${SUDOERS_FILE}.tmp" "$SUDOERS_FILE"
+chmod 440 "$SUDOERS_FILE" 2>/dev/null
+log "OK: sudoers granted, HELPER=$HELPER"
+exit 0

@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>屏幕控制开关</title>
+<style>
+  :root {
+    --bg-0: #0b0d12;
+    --bg-1: #14171f;
+    --card: rgba(255, 255, 255, 0.045);
+    --card-border: rgba(255, 255, 255, 0.09);
+    --text-1: #eef1f6;
+    --text-2: #8b93a5;
+    --amber-1: #ffc247;
+    --amber-2: #f08c00;
+    --green-1: #34d399;
+    --green-2: #059669;
+    --red-1: #f87171;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background:
+      radial-gradient(120% 80% at 50% -10%, rgba(99, 102, 241, 0.16), transparent 60%),
+      linear-gradient(180deg, var(--bg-1), var(--bg-0));
+    color: var(--text-1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    min-height: 100%;
+  }
+  .card {
+    width: min(100%, 400px);
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    padding: 28px 22px 22px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  }
+  .head { text-align: center; margin-bottom: 22px; }
+  .head h1 { font-size: 21px; font-weight: 700; letter-spacing: 2px; }
+  .head p { margin-top: 6px; font-size: 12.5px; color: var(--text-2); }
+
+  .list { display: flex; flex-direction: column; gap: 14px; }
+
+  /* ── 虚线分组：合盖不休眠 + 重启生效 ── */
+  .group.dashed {
+    border: 1.5px dashed rgba(255, 255, 255, .22);
+    border-radius: 20px;
+    padding: 12px 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: rgba(255, 255, 255, .02);
+  }
+  .group-cap {
+    font-size: 12px;
+    color: var(--text-2);
+    line-height: 1.5;
+    padding: 2px 4px 0;
+    opacity: .85;
+  }
+  .group.dashed .btn { background: rgba(255, 255, 255, .05); }
+
+  .btn {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 15px 18px;
+    border-radius: 18px;
+    border: 1px solid var(--card-border);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-2);
+    cursor: pointer;
+    text-align: left;
+    transition: transform .15s ease, box-shadow .4s ease, background .4s ease,
+                border-color .4s ease, color .4s ease;
+    user-select: none;
+  }
+  .btn:active { transform: scale(.975); }
+  .btn:disabled { cursor: wait; opacity: .75; }
+
+  .btn .ic {
+    flex: none;
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--text-2);
+    transition: background .4s ease, color .4s ease, box-shadow .4s ease;
+  }
+  .btn .ic svg { width: 21px; height: 21px; }
+  .btn .tx { flex: 1; min-width: 0; }
+  .btn .tx .t1 { display: block; font-size: 15.5px; font-weight: 600; color: var(--text-1); }
+  .btn .tx .t2 { display: block; margin-top: 3px; font-size: 12px; color: var(--text-2); }
+  .btn .led {
+    flex: none;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.14);
+    transition: background .4s ease, box-shadow .4s ease;
+  }
+
+  /* ── 开灯效果：点亮态 ── */
+  .btn.on { color: var(--text-1); border-color: transparent; }
+  .btn.on .t2 { color: rgba(255, 255, 255, 0.78); }
+
+  #btnScreen.on {
+    background: linear-gradient(135deg, rgba(255, 194, 71, .95), rgba(240, 140, 0, .92));
+    box-shadow: 0 6px 24px rgba(240, 140, 0, .38);
+    color: #3d2600;
+  }
+  #btnScreen.on .ic { background: rgba(255, 255, 255, .25); color: #3d2600; }
+  #btnScreen.on .t1 { color: #2f1d00; }
+  #btnScreen.on .t2 { color: rgba(61, 38, 0, .8); }
+  #btnScreen.on .led { background: #fff3d6; box-shadow: 0 0 10px 2px rgba(255, 243, 214, .9); }
+
+  #btnLid.on {
+    background: linear-gradient(135deg, rgba(52, 211, 153, .95), rgba(5, 150, 105, .92));
+    box-shadow: 0 6px 24px rgba(5, 150, 105, .35);
+    color: #053b2b;
+  }
+  #btnLid.on .ic { background: rgba(255, 255, 255, .25); color: #053b2b; }
+  #btnLid.on .t1 { color: #023a2a; }
+  #btnLid.on .t2 { color: rgba(5, 59, 43, .8); }
+  #btnLid.on .led { background: #d7ffee; box-shadow: 0 0 10px 2px rgba(215, 255, 238, .9); }
+
+  /* ── 重启按钮 ── */
+  #btnReboot .ic { color: var(--red-1); }
+  #btnReboot:hover { border-color: rgba(248, 113, 113, .45); background: rgba(248, 113, 113, .08); }
+
+  /* ── 加载指示 ── */
+  .btn.busy .led {
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, .35);
+    border-top-color: #fff;
+    animation: spin .7s linear infinite;
+    box-shadow: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .foot { margin-top: 20px; text-align: center; font-size: 11.5px; color: var(--text-2); opacity: .75; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    left: 50%; bottom: 34px;
+    transform: translateX(-50%) translateY(16px);
+    max-width: min(86vw, 360px);
+    padding: 10px 18px;
+    border-radius: 12px;
+    background: rgba(30, 33, 42, .96);
+    border: 1px solid var(--card-border);
+    color: var(--text-1);
+    font-size: 13px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s ease, transform .3s ease;
+    z-index: 9;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.err { border-color: rgba(248, 113, 113, .5); color: #fecaca; }
+
+  /* ── 说明按钮 ── */
+  .help-btn {
+    position: absolute;
+    top: 22px; right: 22px;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--card-border);
+    background: rgba(255, 255, 255, .06);
+    color: var(--text-2);
+    font-size: 16px; font-weight: 700;
+    cursor: pointer;
+    line-height: 1;
+    transition: background .25s ease, color .25s ease, transform .15s ease;
+  }
+  .help-btn:hover { background: rgba(255, 255, 255, .14); color: var(--text-1); transform: scale(1.08); }
+  .help-btn:active { transform: scale(.94); }
+
+  /* ── 说明弹层 ── */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .55);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s ease;
+    z-index: 20;
+  }
+  .modal.open { opacity: 1; pointer-events: auto; }
+
+  .modal-card {
+    position: relative;
+    width: min(100%, 420px);
+    max-height: 86vh;
+    overflow-y: auto;
+    background: #181b23;
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 22px 20px 18px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .55);
+    transform: translateY(12px) scale(.98);
+    transition: transform .25s ease;
+  }
+  .modal.open .modal-card { transform: translateY(0) scale(1); }
+
+  .modal-close {
+    position: absolute;
+    top: 12px; right: 14px;
+    width: 28px; height: 28px;
+    border: none; border-radius: 50%;
+    background: rgba(255, 255, 255, .06);
+    color: var(--text-2);
+    font-size: 20px; line-height: 1;
+    cursor: pointer;
+  }
+  .modal-close:hover { background: rgba(255, 255, 255, .14); color: var(--text-1); }
+
+  .modal-card h2 { font-size: 17px; margin-bottom: 8px; padding-right: 26px; }
+  .modal-card h3 { font-size: 14px; margin: 16px 0 8px; color: #cdd4e0; }
+  .modal-intro { font-size: 13px; line-height: 1.6; color: var(--text-2); }
+  .steps { margin: 0; padding-left: 20px; }
+  .steps li { font-size: 13px; line-height: 1.7; color: var(--text-2); margin-bottom: 2px; }
+
+  .cmd-block {
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+  }
+  .cmd-title { font-size: 13.5px; font-weight: 700; color: var(--text-1); margin-bottom: 6px; }
+  .cmd-block code {
+    display: block;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: #9fd4ff;
+    word-break: break-word;
+    white-space: pre-wrap;
+  }
+  .cmd-req { margin-top: 6px; font-size: 12px; line-height: 1.5; color: var(--text-2); }
+  .cmd-req code { display: inline; font-size: 11.5px; color: #9fd4ff; }
+
+  .modal-foot {
+    /* sticky 吸底：无论内容多长，GitHub 链接始终可见 */
+    position: sticky;
+    bottom: -18px; /* 抵消卡片 padding-bottom */
+    margin: 16px -20px -18px; /* 负边距撑满卡片宽度，遮住滚动内容 */
+    padding: 12px 20px;
+    background: #181b23;
+    border-top: 1px solid var(--card-border);
+    border-radius: 0 0 20px 20px;
+    font-size: 13px;
+    color: var(--text-2);
+  }
+  .modal-foot a {
+    color: #6ea8ff;
+    text-decoration: none;
+    font-weight: 600;
+    word-break: break-all;
+  }
+  .modal-foot a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+  <main class="card">
+    <header class="head">
+      <h1>屏幕控制开关</h1>
+      <p>飞牛 fnOS · 显示与休眠控制</p>
+      <button id="btnHelp" class="help-btn" type="button" aria-label="使用说明">?</button>
+    </header>
+
+    <div class="list">
+      <button class="btn" id="btnScreen" type="button">
+        <span class="ic" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2.5" y="4" width="19" height="13" rx="2.5"></rect>
+            <path d="M9 21h6M12 17v4"></path>
+          </svg>
+        </span>
+        <span class="tx">
+          <span class="t1">屏幕开关</span>
+          <span class="t2" id="stateScreen">加载中…</span>
+        </span>
+        <span class="led" aria-hidden="true"></span>
+      </button>
+
+      <div class="group dashed">
+        <div class="group-cap">以下两项配合使用：重启使「合盖不休眠」设置生效</div>
+        <button class="btn" id="btnLid" type="button">
+          <span class="ic" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="4" width="16" height="11" rx="2"></rect>
+              <path d="M2 19h20"></path>
+            </svg>
+          </span>
+          <span class="tx">
+            <span class="t1">合盖不休眠</span>
+            <span class="t2" id="stateLid">加载中…</span>
+          </span>
+          <span class="led" aria-hidden="true"></span>
+        </button>
+
+        <button class="btn" id="btnReboot" type="button">
+          <span class="ic" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3v8"></path>
+              <path d="M6.3 6.5a8 8 0 1 0 11.4 0"></path>
+            </svg>
+          </span>
+          <span class="tx">
+            <span class="t1">重启生效</span>
+            <span class="t2" id="stateReboot">重启使合盖设置生效</span>
+          </span>
+          <span class="led" aria-hidden="true"></span>
+        </button>
+      </div>
+    </div>
+
+    <footer class="foot">状态实时同步硬件 · 重启前请确认无进行中的任务</footer>
+  </main>
+
+  <div class="modal" id="helpModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="使用说明">
+      <button id="helpClose" class="modal-close" type="button" aria-label="关闭">×</button>
+      <h2>关于「屏幕控制开关」</h2>
+      <p class="modal-intro">本工具根据飞牛官方视频教程开发，让大家无需在终端输入命令，点击按钮即可快速实现屏幕开关、合盖不休眠、重启生效等系统功能。打开应用即实时读取硬件真实状态，按钮与屏幕/合盖实际状态保持一致。</p>
+
+      <h3>三步用法</h3>
+      <ol class="steps">
+        <li>在飞牛应用中心安装后，从桌面打开「屏幕控制开关」应用；</li>
+        <li>应用以管理员身份运行，按钮实时反映系统当前真实配置（点亮 = 已开启，灰色 = 已关闭）；</li>
+        <li>点击对应按钮即执行相应系统操作，无需记忆任何命令。</li>
+      </ol>
+
+      <h3>各按钮对应命令与前置条件</h3>
+
+      <div class="cmd-block">
+        <div class="cmd-title">① 屏幕开关</div>
+        <code>setterm --blank poke（点亮）/ force（熄灭） --term linux &lt;/dev/tty1</code>
+        <div class="cmd-req">前置：设备需存在 <code>/dev/tty1</code>（通常为带屏 / HDMI 输出的飞牛设备）；需管理员权限。</div>
+      </div>
+
+      <div class="cmd-block">
+        <div class="cmd-title">② 合盖不休眠</div>
+        <code>将 /etc/systemd/logind.conf 中 HandleLidSwitch、HandleLidSwitchExternalPower、HandleLidSwitchDocked 改为 =ignore，并执行 systemctl restart systemd-logind 生效</code>
+        <div class="cmd-req">前置：笔记本形态设备；首次开启会自动备份原配置，关闭时自动还原默认。</div>
+      </div>
+
+      <div class="cmd-block">
+        <div class="cmd-title">③ 重启生效</div>
+        <code>systemctl reboot -i</code>
+        <div class="cmd-req">前置：管理员权限；与「合盖不休眠」配合使用——修改合盖设置后若未立即生效，点击「重启生效」让设置彻底生效；重启期间 NAS 服务短暂不可用，请确认无进行中的任务。</div>
+      </div>
+
+      <div class="modal-foot">
+        源码与更多：<a href="https://github.com/billypala" target="_blank" rel="noopener noreferrer">github.com/billypala</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var BASE = '/app/screenctl';
+  var API = BASE + '/api';
+
+  var $ = function (id) { return document.getElementById(id); };
+  var btnScreen = $('btnScreen');
+  var btnLid = $('btnLid');
+  var btnReboot = $('btnReboot');
+  var stateScreen = $('stateScreen');
+  var stateLid = $('stateLid');
+  var stateReboot = $('stateReboot');
+  var toast = $('toast');
+
+  var btnHelp = $('btnHelp');
+  var helpModal = $('helpModal');
+  var helpClose = $('helpClose');
+
+  function openHelp() {
+    helpModal.classList.add('open');
+    helpModal.setAttribute('aria-hidden', 'false');
+  }
+  function closeHelp() {
+    helpModal.classList.remove('open');
+    helpModal.setAttribute('aria-hidden', 'true');
+  }
+
+  var toastTimer = null;
+  function showToast(msg, isErr) {
+    toast.textContent = msg;
+    toast.className = 'toast show' + (isErr ? ' err' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.className = 'toast'; }, 3200);
+  }
+
+  function api(path, opts) {
+    return fetch(API + path, Object.assign({ headers: { 'Content-Type': 'application/json' } }, opts))
+      .then(function (r) {
+        return r.json().catch(function () { return { ok: false, error: '响应解析失败' }; });
+      });
+  }
+
+  function render(st) {
+    btnScreen.classList.toggle('on', !!st.screen);
+    stateScreen.textContent = st.screen ? '屏幕点亮中 · 点击熄灭' : '屏幕已熄灭 · 点击点亮';
+    btnLid.classList.toggle('on', !!st.lid);
+    stateLid.textContent = st.lid ? '已开启 · 合盖继续运行' : '已关闭 · 合盖自动休眠';
+  }
+
+  function busy(btn, on) { btn.disabled = on; btn.classList.toggle('busy', on); }
+
+  function loadState(silent) {
+    return api('/state').then(function (r) {
+      if (!r.ok) throw new Error(r.error || '状态获取失败');
+      render(r);
+      return r;
+    }).catch(function (e) { if (!silent) showToast(e.message || '网络异常', true); });
+  }
+
+  // 仅探测服务是否恢复，用于重启后的快速回连（不报错、不弹 toast）
+  function pingState() {
+    return api('/state').then(function (r) { return !!(r && r.ok); }).catch(function () { return false; });
+  }
+
+  function toggle(btn, path, key) {
+    if (btn.disabled) return;
+    var next = !btn.classList.contains('on');
+    busy(btn, true);
+    api(path, { method: 'POST', body: JSON.stringify({ on: next }) })
+      .then(function (r) {
+        if (!r.ok) throw new Error(r.error || '操作失败');
+        var st = {};
+        st[key] = r[key];
+        if (key === 'screen') render({ screen: r.screen, lid: btnLid.classList.contains('on') });
+        else render({ screen: btnScreen.classList.contains('on'), lid: r.lid });
+        showToast(key === 'screen'
+          ? (r.screen ? '屏幕已点亮' : '屏幕已熄灭')
+          : (r.lid ? '合盖不休眠已开启' : '已恢复默认：合盖自动休眠'));
+      })
+      .catch(function (e) { showToast(e.message || '操作失败', true); })
+      .then(function () { busy(btn, false); loadState(); });
+  }
+
+  btnScreen.addEventListener('click', function () { toggle(btnScreen, '/screen', 'screen'); });
+  btnLid.addEventListener('click', function () { toggle(btnLid, '/lid', 'lid'); });
+
+  btnReboot.addEventListener('click', function () {
+    if (btnReboot.disabled) return;
+    if (!window.confirm('确定重启设备使「合盖不休眠」设置生效吗？重启期间 NAS 服务将短暂不可用。')) return;
+    busy(btnReboot, true);
+    stateReboot.textContent = '重启指令已下发…';
+    btnScreen.disabled = true;
+    btnLid.disabled = true;
+    api('/reboot', { method: 'POST', body: '{}' })
+      .then(function (r) {
+        if (!r.ok) throw new Error(r.error || '重启失败');
+        stateReboot.textContent = '设备正在重启，恢复后将自动同步最新状态';
+        showToast('重启指令已下发，设备正在重启');
+        startRebootWatch();
+      })
+      .catch(function (e) {
+        showToast(e.message || '重启失败', true);
+        stateReboot.textContent = '重启使合盖设置生效';
+        busy(btnReboot, false);
+        btnScreen.disabled = false;
+        btnLid.disabled = false;
+      });
+  });
+
+  // 重启后 NAS 会断开再回来：每 3 秒探测一次，设备恢复后自动刷新页面，
+  // 使屏幕/合盖按钮状态实时同步到重启后的真实硬件状态（约 2.5 分钟兜底）
+  function startRebootWatch() {
+    var tries = 0;
+    (function loop() {
+      if (tries++ > 50) { location.reload(); return; }
+      pingState().then(function (ok) {
+        if (ok) { location.reload(); return; }
+        setTimeout(loop, 3000);
+      });
+    })();
+  }
+
+  btnHelp.addEventListener('click', openHelp);
+  helpClose.addEventListener('click', closeHelp);
+  helpModal.addEventListener('click', function (e) { if (e.target === helpModal) closeHelp(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && helpModal.classList.contains('open')) closeHelp();
+  });
+
+  loadState();
+  setInterval(loadState, 30000);
+})();
+</script>
+</body>
+</html>

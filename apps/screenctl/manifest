@@ -1,0 +1,17 @@
+appname=screenctl
+version=1.0.1
+display_name=屏幕控制开关
+desc=NAS 屏幕与休眠快捷控制工具：一键点亮/熄灭屏幕（setterm，实时读取 fb0/blank 同步真实状态）、合盖不休眠开关（/etc/systemd/logind.conf，自动备份并可一键还原默认配置）、重启使合盖设置生效。开屏即实时检测硬件真实状态，按钮与屏幕/合盖实际状态保持一致，仅管理员可操作。
+source=thirdparty
+platform=all
+maintainer=billypala
+maintainer_url=https://github.com/billypala
+distributor=billypala
+distributor_url=https://github.com/billypala
+desktop_uidir=ui
+desktop_applaunchname=screenctl.main
+install_dep_apps=nodejs_v22
+os_min_version=1.2.0
+ctl_stop=true
+checkport=false
+changelog=1.0.1：开屏即实时检测屏幕真实状态（读 /sys/class/graphics/fb0/blank，0=点亮/1=熄灭），按钮与硬件状态始终一致；重启后自动回连刷新同步最新状态。应用改名「屏幕控制开关」；重启按钮改名「重启生效」并与「合盖不休眠」用虚线圈为一组（重启使合盖设置生效）。1.0.0：首个版本。屏幕点亮/熄灭、合盖不休眠开关、一键重启三个控制；首次开启合盖不休眠时自动备份 logind.conf，关闭时还原默认配置。

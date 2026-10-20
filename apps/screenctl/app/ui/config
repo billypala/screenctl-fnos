@@ -1,0 +1,14 @@
+{
+  ".url": {
+    "screenctl.main": {
+      "title": "屏幕开关",
+      "icon": "images/icon_{0}.png",
+      "type": "iframe",
+      "protocol": "",
+      "gatewayPrefix": "/app/screenctl",
+      "gatewaySocket": "app.sock",
+      "url": "/app/screenctl",
+      "allUsers": true
+    }
+  }
+}
